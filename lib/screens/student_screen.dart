@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:sqlite_demo/db_helper.dart';
+import 'package:sqlite_demo/student.dart';
 
 class StudentScreen extends StatelessWidget {
-  const StudentScreen({super.key});
+  final Student? student;
+  const StudentScreen({super.key, this.student});
 
   @override
   Widget build(BuildContext context) {
+    DatabaseHelper db = DatabaseHelper();
+    final nameController = TextEditingController();
+    final markController = TextEditingController();
+
+    if (student != null) {
+      nameController.text = student!.name;
+      markController.text = student!.mark;
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Student')),
+      appBar:
+          AppBar(title: Text(student == null ? 'Add Student' : 'Edit Student')),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
         child: Column(
@@ -23,6 +36,7 @@ class StudentScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 30),
               child: TextFormField(
+                controller: nameController,
                 maxLines: 1,
                 keyboardType: TextInputType.name,
                 decoration: const InputDecoration(
@@ -37,11 +51,12 @@ class StudentScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 30),
               child: TextFormField(
+                controller: markController,
                 maxLines: 1,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                     hintText: 'Enter Student\'s Mark',
-                    labelText: 'Email',
+                    labelText: 'Mark',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(10.0)),
                       borderSide: BorderSide(color: Colors.white, width: 0.75),
@@ -65,12 +80,28 @@ class StudentScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    final name = nameController.value.text;
+                    final mark = markController.value.text;
+
+                    if (name.isEmpty || mark.isEmpty) {
+                      return;
+                    }
+
+                    final Student std =
+                        Student(name: name, mark: mark, id: student?.id);
+
+                    if (student == null) {
+                      await db.addStudent(std);
+                    } else {
+                      await db.updateStudent(std);
+                    }
+
                     Navigator.pop(context);
                   },
-                  child: const Text(
-                    'Save',
-                    style: TextStyle(fontSize: 20),
+                  child: Text(
+                    student == null ? 'Save' : 'Edit',
+                    style: const TextStyle(fontSize: 20),
                   ),
                 ),
               ),
